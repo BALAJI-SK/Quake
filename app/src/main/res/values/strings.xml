@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Quake Report</string>
+    <string name="no_earthquake_recently">No earthquake recently</string>
+    <string name="no_internet_connection">No internet Connection</string>
+</resources>
