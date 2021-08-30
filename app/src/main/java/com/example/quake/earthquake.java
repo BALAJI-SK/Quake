@@ -20,7 +20,7 @@ public class earthquake {
     }
 
     public double getMagnitude() {
-        return magnitude;
+        return  Math.round(magnitude*10)/10.0;
     }
 
     public String getPlace() {

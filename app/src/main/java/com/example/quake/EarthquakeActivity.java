@@ -9,12 +9,16 @@ import androidx.loader.content.Loader;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -75,7 +79,26 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     @Override
     public Loader<List<earthquake>> onCreateLoader(int id, @Nullable Bundle args) {
         Log.i("Idea of Loaders", "onCreateLoader()");
-        return new EarthquakeLoader(EarthquakeActivity.this,USED_REQUEST_URL);
+
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String minMagnitude = sharedPrefs.getString(
+                getString(R.string.settings_min_magnitude_key),
+                getString(R.string.settings_min_magnitude_default));
+
+        String orderBy = sharedPrefs.getString(
+                getString(R.string.settings_order_by_key),
+                getString(R.string.settings_order_by_default)
+        );
+
+        Uri baseUri = Uri.parse(USED_REQUEST_URL);
+        Uri.Builder uriBuilder = baseUri.buildUpon();
+
+        uriBuilder.appendQueryParameter("format", "geojson");
+        uriBuilder.appendQueryParameter("limit", "10");
+        uriBuilder.appendQueryParameter("minmag", minMagnitude);
+        uriBuilder.appendQueryParameter("orderby", orderBy);
+
+        return new EarthquakeLoader(EarthquakeActivity.this,uriBuilder.toString());
     }
 
     @Override
@@ -96,41 +119,25 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         mAdapter.clear();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
 
 }
 
 
 
-/*      This is presently used method instead of AsyncTask Thread this wont give any memory Leak
-
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> {
-        // here if we add  runOnUiThread() method which acts as onPerExecute() method
-
-
-        // here we give what we give in doInBackground() method
-                List<earthquake> earthquakeList= QueryUtils.fetchEarthquakeData(USGS_REQUEST_URL);
-
-
-        // Runs as onPostExecute()
-        runOnUiThread(() -> {
-        // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = findViewById(R.id.list);
-
-        // Create a new {@link ArrayAdapter} of earthquakes
-        EarthquakesAdapter earthquakesAdapter = new EarthquakesAdapter(EarthquakeActivity.this, earthquakeList);
-
-        // Set the adapter on the {@link ListView}
-        // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(earthquakesAdapter);
-        earthquakeListView.setOnItemClickListener((parent, view, position, id) -> {
-        earthquake currentEarth = earthquakeList.get(position);
-        Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse(currentEarth.getWebLink()));
-        startActivity(web);
-
-        });
-        });
-        });
-*/
